@@ -1,0 +1,27 @@
+version: '2'
+
+volumes:
+  training-volume:
+
+services:
+  jupyter:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: agaveplatform/jupyter-notebook:latest
+    command: start-notebook.sh --NotebookApp.token=''
+    #command: start.sh jupyter lab
+    mem_limit: 2048m
+    ports:
+      - '8888:8888'
+    environment:
+      - AGAVE_CACHE_DIR=/home/jovyan/work/.agave
+      - AGAVE_JSON_PARSER=jq
+      - AGAVE_TENANT=iplantc.org
+      - AGAVE_USERNAME=${AGAVE_USERNAME}
+      - AGAVE_PASSWORD=${AGAVE_PASSWORD}
+      - VM_HOSTNAME=localhost
+      - GRANT_SUDO=yes
+    volumes:
+      - training-volume:/home/jovyan/work
+      - ./notebooks:/home/jovyan/notebooks
