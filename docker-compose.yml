@@ -17,7 +17,7 @@ services:
     environment:
       - AGAVE_CACHE_DIR=/home/jovyan/work/.agave
       - AGAVE_JSON_PARSER=jq
-      - AGAVE_TENANT=iplantc.org
+      - AGAVE_TENANT=${AGAVE_TENANT}
       - AGAVE_USERNAME=${AGAVE_USERNAME}
       - AGAVE_PASSWORD=${AGAVE_PASSWORD}
       - VM_HOSTNAME=localhost
