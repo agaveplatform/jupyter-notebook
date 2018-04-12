@@ -3,32 +3,38 @@ FROM jupyter/datascience-notebook:82b978b3ceeb
 MAINTAINER Rion Dooley <deardooley@gmail.com>
 
 # Install agave python sdk and bash kernel
+# Add sshpass for importing password without displaying in console
 USER root
 RUN cd /usr/local && \
     wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 && \
     mv /usr/local/jq-linux64 /usr/local/bin/jq && \
     chmod +x /usr/local/bin/jq && \
-    # add sshpass for importing password without displaying in console
     apt-get update && \
     apt-get -y install sshpass bsdmainutils && \
     apt-get clean
 
 USER jovyan
-# install agavepy and bash kernel in python 2 and 3 environments
-RUN pip install agavepy
 
-RUN /bin/bash -c "source activate python2" && \
-    pip2 install -e "git+https://github.com/TACC/agavepy.git#egg=agavepy" && \
-    pip2 install bash_kernel && \
-    /bin/bash -c "source activate python2 && python -m bash_kernel.install"
+# install agavepy and bash kernel in python 3 environments
+RUN pip install -e "git+https://github.com/TACC/agavepy.git#egg=agavepy"
+RUN pip install bash_kernel
+RUN python -m bash_kernel.install
+
+#RUN /bin/bash -c "source activate python2" && \
+#    pip2 install -e "git+https://github.com/TACC/agavepy.git#egg=agavepy" && \
+#    pip2 install bash_kernel && \
+#    /bin/bash -c "source activate python2 && python -m bash_kernel.install"
 
 # install jypter widgets for html form generation
 RUN pip install ipywidgets && \
     jupyter nbextension enable --py --sys-prefix widgetsnbextension
 
+# install agavepy in the python 2 environment
+RUN pip2 install -e "git+https://github.com/TACC/agavepy.git#egg=agavepy"
+
 USER root
+
 # install rAgave SDK
-RUN apt-get install -y libssh2-1-dev zlib1g-dev
 RUN echo '\n\
     \noptions(repos = c(CRAN = "https://cran.rstudio.com/"), download.file.method = "libcurl") \
     \noptions(repos = c(CRAN="https://mran.microsoft.com/snapshot/2017-12-31"), download.file.method = "libcurl") \
@@ -41,10 +47,9 @@ RUN echo '\n\
     \n}' >> /root/.Rprofile && \
     cp /root/.Rprofile /home/jovyan/.Rprofile && \
     chown jovyan /home/jovyan/.Rprofile && \
-    ln -s /bin/tar /bin/gtar && \
+    if [ ! -e "/bin/gtar" ]; then ln -s /bin/tar /bin/gtar; fi && \
     git clone --depth 1 https://github.com/agaveplatform/r-sdk.git src/r-sdk && \
-    Rscript -e 'install.packages("devtools")' \
-            -e 'library(devtools)' \
+    Rscript -e 'library(devtools)' \
             -e 'install("/home/jovyan/src/r-sdk")'
 
 USER jovyan
@@ -62,8 +67,6 @@ COPY notebooks notebooks
 COPY INSTALL.ipynb INSTALL.ipynb
 COPY start.sh /usr/local/bin
 RUN chown -R jovyan notebooks INSTALL.ipynb
-#ADD http://cct.lsu.edu/~sbrandt/AgaveOverview.pdf AgaveOverview.pdf
-#RUN mv AgaveOverview.pdf "Agave Overview.pdf"
 RUN mkdir .jupyter
 COPY jupyter_notebook_config.py .jupyter/
 RUN chmod 700 .jupyter
@@ -79,7 +82,7 @@ LABEL org.agaveplatform.devops.architecture="x86_64"                            
       org.agaveplatform.devops.version="$VERSION"                                   \
       org.agaveplatform.devops.vcs-type="git"                                       \
       org.agaveplatform.devops.vcs-url="https://github.com/agaveplatform/jupyter-notebook" \
-      org.agaveplatform.devops.jupyter.version="5.0.x"                              \
+      org.agaveplatform.devops.jupyter.version="5.2.x"                              \
       org.agaveplatform.devops.environment="training"                               \
       org.agaveplatform.training="jupyter"
 
