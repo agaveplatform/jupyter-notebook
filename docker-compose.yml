@@ -9,8 +9,6 @@ services:
       context: ./
       dockerfile: Dockerfile
     image: agaveplatform/jupyter-notebook:5.2
-    command: start-notebook.sh --NotebookApp.token=''
-    #command: start.sh jupyter lab
     mem_limit: 2048m
     ports:
       - '8888:8888'

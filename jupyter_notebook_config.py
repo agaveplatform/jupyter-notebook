@@ -222,13 +222,14 @@ c.NotebookApp.ip = '0.0.0.0'
 #  In such a case, server the notebook server on localhost is not secure since
 #  any user can connect to the notebook server via ssh.
 
-
 c.NotebookApp.password_required = True
 #
 # Look for password in environment. This is the user's plaintext password. Not for prod use
 import os
+# print('Agave password:' + os.environ.get('AGAVE_PASSWORD'))
+
 if os.environ.get('AGAVE_PASSWORD'):
-    #
+
     # hash the plaintext password here
     from notebook.auth import passwd
     agavePassHash = passwd(os.environ.get('AGAVE_PASSWORD'))

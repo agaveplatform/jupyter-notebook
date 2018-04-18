@@ -16,9 +16,10 @@ RUN cd /usr/local && \
 USER jovyan
 
 # install agavepy and bash kernel in python 3 environments
-RUN pip install -e "git+https://github.com/TACC/agavepy.git#egg=agavepy"
-RUN pip install bash_kernel
-RUN python -m bash_kernel.install
+RUN pip install -e "git+https://github.com/TACC/agavepy.git#egg=agavepy" && \
+    pip install bash_kernel && \
+    python -m bash_kernel.install && \
+    pip install --upgrade matplotlib pandas jupyterlab
 
 #RUN /bin/bash -c "source activate python2" && \
 #    pip2 install -e "git+https://github.com/TACC/agavepy.git#egg=agavepy" && \
@@ -62,14 +63,11 @@ ENV AGAVE_CLI_COMPLETION_SHOW_FILE_PATHS no
 ENV AGAVE_CLI_COMPLETION_CACHE_LIFETIME 0
 RUN tenants-init -t agave.prod -v
 
-USER root
 COPY notebooks notebooks
 COPY INSTALL.ipynb INSTALL.ipynb
 COPY start.sh /usr/local/bin
-RUN chown -R jovyan notebooks INSTALL.ipynb
-RUN mkdir .jupyter
-COPY jupyter_notebook_config.py .jupyter/
-RUN chmod 700 .jupyter
+COPY jupyter_notebook_config.py /home/jovyan/.jupyter/jupyter_notebook_config.py
+
 
 ARG BUILD_DATE
 ARG VERSION
@@ -101,8 +99,7 @@ RUN chmod 700 /home/jovyan/.ssh && \
     echo "Host *" > /home/jovyan/.ssh/config && \
     echo "UserKnownHostsFile      /dev/null" >> /home/jovyan/.ssh/config && \
     echo "StrictHostKeyChecking   false" >> /home/jovyan/.ssh/config && \
-    chown -R jovyan:users /home/jovyan/.ssh && \
-    chown -R jovyan:users /home/jovyan/INSTALL.ipynb
+    chown -R jovyan:users /home/jovyan && \
+    chmod 700 .jupyter
 
-EXPOSE 8888
-CMD ["start-notebook.sh", "--NotebookApp.token=''"]
+
