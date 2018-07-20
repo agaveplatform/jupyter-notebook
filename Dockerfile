@@ -10,7 +10,7 @@ RUN cd /usr/local && \
     mv /usr/local/jq-linux64 /usr/local/bin/jq && \
     chmod +x /usr/local/bin/jq && \
     apt-get update && \
-    apt-get -y install sshpass bsdmainutils && \
+    apt-get -y install sshpass bsdmainutils libgit2-dev libssl-dev libv8-3.14-dev && \
     apt-get clean
 
 USER jovyan
@@ -20,11 +20,6 @@ RUN pip install -e "git+https://github.com/TACC/agavepy.git#egg=agavepy" && \
     pip install bash_kernel && \
     python -m bash_kernel.install && \
     pip install --upgrade matplotlib pandas jupyterlab
-
-#RUN /bin/bash -c "source activate python2" && \
-#    pip2 install -e "git+https://github.com/TACC/agavepy.git#egg=agavepy" && \
-#    pip2 install bash_kernel && \
-#    /bin/bash -c "source activate python2 && python -m bash_kernel.install"
 
 # install jypter widgets for html form generation
 RUN pip install ipywidgets && \
@@ -38,20 +33,34 @@ USER root
 # install rAgave SDK
 RUN echo '\n\
     \noptions(repos = c(CRAN = "https://cran.rstudio.com/"), download.file.method = "libcurl") \
-    \noptions(repos = c(CRAN="https://mran.microsoft.com/snapshot/2017-12-31"), download.file.method = "libcurl") \
+    \noptions(repos = c(CRAN="https://cran.revolutionanalytics.com/"), download.file.method = "libcurl") \
     \n\
     \n# Configure httr to perform out-of-band authentication if HTTR_LOCALHOST \
     \n# is not set since a redirect to localhost may not work depending upon \
     \n# where this Docker container is running. \
     \nif(is.na(Sys.getenv("HTTR_LOCALHOST", unset=NA))) { \
     \n  options(httr_oob_default = TRUE) \
-    \n}' >> /root/.Rprofile && \
-    cp /root/.Rprofile /home/jovyan/.Rprofile && \
-    chown jovyan /home/jovyan/.Rprofile && \
-    if [ ! -e "/bin/gtar" ]; then ln -s /bin/tar /bin/gtar; fi && \
-    git clone --depth 1 https://github.com/agaveplatform/r-sdk.git src/r-sdk && \
-    Rscript -e 'library(devtools)' \
-            -e 'install("/home/jovyan/src/r-sdk")'
+    \n}' >> .Rprofile
+
+RUN if [ ! -e "/bin/gtar" ]; then ln -s /bin/tar /bin/gtar; fi && \
+    git clone --depth 1 https://github.com/agaveplatform/r-sdk.git src/r-sdk
+
+RUN Rscript -e 'install.packages(c("xml2","plyr","roxygen2"))'
+RUN Rscript -e 'devtools::install_github("ropensci/codemetar")'
+
+RUN Rscript -e 'devtools::install("/home/jovyan/src/r-sdk")' \
+            -e 'devtools::document("/home/jovyan/src/r-sdk")' \
+            -e 'devtools::install("/home/jovyan/src/r-sdk")'
+RUN echo '\n\
+    \nlibrary("plyr") \
+    \nlibrary("httr") \
+    \nlibrary("rAgave") \
+    \n\
+    \n# disable ssl peer verification if requested \
+    \nset_config( config( ssl_verifypeer = 0L ) ) \
+    \n}' >> .Rprofile && \
+    chown jovyan /home/jovyan/.Rprofile
+
 
 USER jovyan
 # Install agave bash cli
@@ -92,6 +101,7 @@ ENV VM_PORT 10022
 USER root
 
 COPY ./ssh/ /home/jovyan/.ssh/
+COPY keygen.sh /usr/local/bin/keygen.sh
 RUN chmod 700 /home/jovyan/.ssh && \
     cp /home/jovyan/.ssh/id_rsa.pub /home/jovyan/.ssh/authorized_keys && \
     chmod 600 /home/jovyan/.ssh/authorized_keys && \
@@ -100,6 +110,7 @@ RUN chmod 700 /home/jovyan/.ssh && \
     echo "UserKnownHostsFile      /dev/null" >> /home/jovyan/.ssh/config && \
     echo "StrictHostKeyChecking   false" >> /home/jovyan/.ssh/config && \
     chown -R jovyan:users /home/jovyan && \
-    chmod 700 .jupyter
+    chmod 700 .jupyter && \
+    chmod +x /usr/local/bin/keygen.sh
 
 
