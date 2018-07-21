@@ -52,13 +52,14 @@ RUN Rscript -e 'devtools::install("/home/jovyan/src/r-sdk")' \
             -e 'devtools::document("/home/jovyan/src/r-sdk")' \
             -e 'devtools::install("/home/jovyan/src/r-sdk")'
 RUN echo '\n\
+    \noptions(warn=-1) \
     \nlibrary("plyr") \
     \nlibrary("httr") \
-    \nlibrary("rAgave") \
+    \nsuppressMessages(library("rAgave")) \
     \n\
     \n# disable ssl peer verification if requested \
     \nset_config( config( ssl_verifypeer = 0L ) ) \
-    \n}' >> .Rprofile && \
+    \n' >> .Rprofile && \
     chown jovyan /home/jovyan/.Rprofile
 
 
@@ -112,6 +113,6 @@ RUN chmod 700 /home/jovyan/.ssh && \
     chown -R jovyan:users /home/jovyan && \
     chmod 700 .jupyter && \
     chmod +x /usr/local/bin/keygen.sh && \
-    pip install --upgrade pip
+    pip install --upgrade pip setvar
 
 
