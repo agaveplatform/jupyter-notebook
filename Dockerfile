@@ -111,6 +111,7 @@ RUN chmod 700 /home/jovyan/.ssh && \
     echo "StrictHostKeyChecking   false" >> /home/jovyan/.ssh/config && \
     chown -R jovyan:users /home/jovyan && \
     chmod 700 .jupyter && \
-    chmod +x /usr/local/bin/keygen.sh
+    chmod +x /usr/local/bin/keygen.sh && \
+    pip install --upgrade pip
 
 
