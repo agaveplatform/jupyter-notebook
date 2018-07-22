@@ -42,6 +42,9 @@ RUN echo '\n\
     \n  options(httr_oob_default = TRUE) \
     \n}' >> .Rprofile
 
+# Forcing cli to reinstall every time
+COPY notebooks notebooks
+
 RUN if [ ! -e "/bin/gtar" ]; then ln -s /bin/tar /bin/gtar; fi && \
     git clone --depth 1 https://github.com/agaveplatform/r-sdk.git src/r-sdk
 
@@ -62,7 +65,6 @@ RUN echo '\n\
     \n' >> .Rprofile && \
     chown jovyan /home/jovyan/.Rprofile
 
-
 USER jovyan
 # Install agave bash cli
 RUN  git clone -b develop --depth  1  https://github.com/agaveplatform/agave-cli.git src/cli
@@ -73,7 +75,7 @@ ENV AGAVE_CLI_COMPLETION_SHOW_FILE_PATHS no
 ENV AGAVE_CLI_COMPLETION_CACHE_LIFETIME 0
 RUN tenants-init -t agave.prod -v
 
-COPY notebooks notebooks
+
 COPY INSTALL.ipynb INSTALL.ipynb
 COPY start.sh /usr/local/bin
 COPY jupyter_notebook_config.py /home/jovyan/.jupyter/jupyter_notebook_config.py
